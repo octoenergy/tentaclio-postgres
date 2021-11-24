@@ -44,8 +44,11 @@ format: ## Run black and isort
 # Testing
 
 .PHONY: test
-test: ## Run unit tests
-	pipenv run pytest tests
+unit: ## Run unit tests
+	pipenv run pytest tests/unit
+
+functional:
+	pipenv run pytest tests/functional/postgres
 
 # Release
 package:

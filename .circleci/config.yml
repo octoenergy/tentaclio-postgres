@@ -40,15 +40,19 @@ commands:
           key: source-{{ .Branch }}-{{ .Revision }}
           paths:
             - "./.git"
-            -
+
+# todo: remove unixodbc when tentaclio 1.0 is released
+  install_unixodbc:
+    steps:
+      - run:
+          name: Instal UnixODBC
+          command: |
+            sudo apt-get install unixodbc-dev -y
+
   update_virtualenv:
     steps:
-      - restore_cache:
-          keys:
-            - virtualenv-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-            - virtualenv-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-
-            - virtualenv-{{ .Environment.CACHE_VERSION }}-
       - configure_github
+      - install_unixodbc
       - run:
           name: Install Python packages
           command: make sync
@@ -67,14 +71,35 @@ jobs:
           name: Run Python linter
           command: make lint
 
-  test:
+  unit:
     executor: standard
     steps:
       - checkout_source
       - update_virtualenv
       - run:
           name: Run Python unit tests
-          command: make test
+          command: make unit
+
+  functional:
+    working_directory: ~/lib
+    docker:
+      - image: circleci/python:3.9
+        environment:
+          TENTACLIO__CONN__POSTGRES_TEST: postgresql://:@localhost:5432/tentaclio-db
+          PIPENV_VENV_IN_PROJECT: true
+
+      - image: circleci/postgres:9.5.10
+        environment:
+          # CircleCI img run under `circleci` user
+          POSTGRES_USER: circleci
+          POSTGRES_DB: tentaclio-db
+
+    steps:
+      - checkout_source
+      - update_virtualenv
+      - run:
+          name: Run postgres functional tests
+          command: make functional
 
   release:
     executor: standard
@@ -102,18 +127,31 @@ jobs:
           command: |
             make release
 
-
 workflows:
   version: 2
 
   test-build-deploy:
     jobs:
-      - lint
-      - test
-      - release:
+      - lint:
           filters:
-            branches:
-              only: master
             tags:
-              only: /[0-9]+(\.[0-9]+)*/
-          context: TENTACLIO
+              only: /.*/
+      - unit:
+          filters:
+            tags:
+              only: /.*/
+      - functional:
+          filters:
+            tags:
+              only: /.*/
+      - release:
+          requires:
+            - lint
+            - unit
+            - functional
+          filters:
+            tags:
+              only: /[0-9]+(\.[0-9]+)*(-alpha\.[0-9]+)?/
+            branches:
+              ignore: /.*/
+

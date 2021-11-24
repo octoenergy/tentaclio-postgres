@@ -35,8 +35,7 @@ class VerifyVersionCommand(install):
 
 install_requires = [
     "tentaclio",
-    "pyodbc",
-    "psycopg2",
+    "psycopg2-binary",
 ]
 
 
@@ -44,7 +43,7 @@ setup_args = dict(
     name="tentaclio-postgres",
     version=VERSION,
     include_package_data=True,
-    description="A python project containing all the dependencies for schema postgresql for tentaclio.",
+    description="A python project containing all the dependencies for postgresql tentaclio schema.",
     long_description=README,
     long_description_content_type="text/markdown",
     author="Octopus Energy",
