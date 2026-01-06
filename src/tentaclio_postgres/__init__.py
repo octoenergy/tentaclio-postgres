@@ -1,4 +1,5 @@
-"""This package implements the tentaclio postgres client """
+"""This package implements the tentaclio postgres client"""
+
 from tentaclio import *  # noqa
 
 from .clients.postgres_client import PostgresClient

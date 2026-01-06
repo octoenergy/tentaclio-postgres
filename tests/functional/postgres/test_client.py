@@ -20,8 +20,10 @@ def _client(db_client):
         sqla.Column(TEST_COLUMNS[2], sqla.Float),
     )
     db_client.set_schema(test_meta)
+    db_client.conn.commit()  # Commit so schema is visible to other connections
     yield db_client
     db_client.delete_schema(test_meta)
+    db_client.conn.commit()
 
 
 @pytest.fixture
