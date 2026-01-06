@@ -4,17 +4,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-# Install project as editable
 tentaclio-postgres = {editable = true,path = "."}
 pytest = "*"
 pytest-cov = "*"
 pytest-mock = "*"
-
 black = "*"
 flake8 = "*"
 isort = "*"
 mypy = "*"
-
 twine = "*"
 
 [packages]
