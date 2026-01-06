@@ -35,8 +35,7 @@ commands:
             - source-{{ .Branch }}-{{ .Revision }}
             - source-{{ .Branch }}-
             - source-
-      - checkout:
-          method: full
+      - checkout
       - save_cache:
           key: source-{{ .Branch }}-{{ .Revision }}
           paths:
@@ -86,10 +85,10 @@ jobs:
     docker:
       - image: circleci/python:3.9
         environment:
-          TENTACLIO__CONN__POSTGRES_TEST: postgresql://:@localhost:5432/tentaclio-db
+          TENTACLIO__CONN__POSTGRES_TEST: postgresql://circleci@localhost:5432/tentaclio-db
           PIPENV_VENV_IN_PROJECT: true
 
-      - image: circleci/postgres:9.5.10
+      - image: cimg/postgres:15.10
         environment:
           # CircleCI img run under `circleci` user
           POSTGRES_USER: circleci
