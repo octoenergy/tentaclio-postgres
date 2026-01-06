@@ -3,12 +3,15 @@ Local py.test plugins
 
 https://docs.pytest.org/en/latest/writing_plugins.html#conftest-py-plugins
 """
+
 import io
 import os
 from typing import Sequence
 
 import pytest
-from tentaclio import URL, Reader, Writer, clients
+from tentaclio import URL, Reader, Writer
+
+import tentaclio_postgres
 
 
 POSTGRES_TEST_URL = os.getenv("TENTACLIO__CONN__POSTGRES_TEST")
@@ -36,7 +39,7 @@ def postgres_url():
 @pytest.fixture(scope="session")
 def db_client(postgres_url):
     """Create and tear down the session-wide SQLAlchemy Db connection"""
-    with clients.PostgresClient(postgres_url) as client:
+    with tentaclio_postgres.PostgresClient(postgres_url) as client:
         yield client
 
 
@@ -49,7 +52,7 @@ def application_name():
 def db_client_application_name(postgres_url, application_name, monkeypatch):
     """Create and tear down the session-wide SQLAlchemy Db connection"""
     monkeypatch.setenv("TENTACLIO__PG_APPLICATION_NAME", application_name)
-    with clients.PostgresClient(postgres_url) as client:
+    with tentaclio_postgres.PostgresClient(postgres_url) as client:
         yield client
 
 
@@ -57,11 +60,9 @@ def db_client_application_name(postgres_url, application_name, monkeypatch):
 
 
 class FakeHandler(object):
-    def open_reader_for(self, url: "URL", extras: dict) -> Reader:
-        ...
+    def open_reader_for(self, url: "URL", extras: dict) -> Reader: ...
 
-    def open_writer_for(self, url: "URL", extras: dict) -> Writer:
-        ...
+    def open_writer_for(self, url: "URL", extras: dict) -> Writer: ...
 
 
 @pytest.fixture
