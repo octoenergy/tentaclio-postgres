@@ -1,4 +1,5 @@
 """Handler for postgresql:// urls."""
+
 from typing import Tuple
 
 from tentaclio.protocols import ReaderClosable, WriterClosable
