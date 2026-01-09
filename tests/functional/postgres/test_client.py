@@ -20,8 +20,11 @@ def _client(db_client):
         sqla.Column(TEST_COLUMNS[2], sqla.Float),
     )
     db_client.set_schema(test_meta)
+    # Commit the schema creation so other connections can see the table
+    db_client.conn.commit()
     yield db_client
     db_client.delete_schema(test_meta)
+    db_client.conn.commit()
 
 
 @pytest.fixture
@@ -30,14 +33,14 @@ def fixture_client(db_client):
 
 
 @pytest.fixture
-def fixture_client_app_name(db_client_application_name):
-    yield from _client(db_client_application_name)
-
-
-@pytest.fixture
 def fixture_df():
     df = pd.DataFrame(data=[TEST_VALUES], columns=TEST_COLUMNS)
     return df
+
+
+@pytest.fixture
+def fixture_client_app_name(db_client_application_name):
+    yield from _client(db_client_application_name)
 
 
 class TestPostgresClient:

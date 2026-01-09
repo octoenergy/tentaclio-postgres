@@ -19,7 +19,7 @@ def csv_data():
 
 
 def test_dump_csv(csv_data, csv_dumper, mocker):
-    mock = mocker.patch("tentaclio.clients.postgres_client.PostgresClient")
+    mock = mocker.patch("tentaclio_postgres.clients.postgres_client.PostgresClient")
     recorder = csv_dumper
     mock.return_value = recorder
 
@@ -33,7 +33,7 @@ def test_dump_csv(csv_data, csv_dumper, mocker):
 
 
 def test_create_client_correct_url(csv_data, csv_dumper, mocker):
-    mock = mocker.patch("tentaclio.clients.postgres_client.PostgresClient")
+    mock = mocker.patch("tentaclio_postgres.clients.postgres_client.PostgresClient")
     recorder = csv_dumper
     mock.return_value = recorder
 
@@ -44,7 +44,7 @@ def test_create_client_correct_url(csv_data, csv_dumper, mocker):
 
 
 def test_dump_csv_no_table(csv_data, csv_dumper, mocker):
-    mock = mocker.patch("tentaclio.clients.postgres_client.PostgresClient")
+    mock = mocker.patch("tentaclio_postgres.clients.postgres_client.PostgresClient")
     recorder = csv_dumper
     mock.return_value = recorder
     with pytest.raises(ValueError):

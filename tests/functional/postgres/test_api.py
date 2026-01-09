@@ -25,8 +25,11 @@ def fixture_client(db_client):
         sqla.Column(TEST_COLUMNS[2], sqla.Integer),
     )
     db_client.set_schema(test_meta)
+    # Commit the schema creation so other connections can see the table
+    db_client.conn.commit()
     yield db_client
     db_client.delete_schema(test_meta)
+    db_client.conn.commit()
 
 
 @pytest.fixture
