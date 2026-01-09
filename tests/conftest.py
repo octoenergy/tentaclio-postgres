@@ -3,12 +3,15 @@ Local py.test plugins
 
 https://docs.pytest.org/en/latest/writing_plugins.html#conftest-py-plugins
 """
+
 import io
 import os
 from typing import Sequence
 
 import pytest
-from tentaclio import URL, Reader, Writer, clients
+from tentaclio import URL, Reader, Writer
+
+from tentaclio_postgres import clients
 
 
 POSTGRES_TEST_URL = os.getenv("TENTACLIO__CONN__POSTGRES_TEST")
@@ -57,11 +60,9 @@ def db_client_application_name(postgres_url, application_name, monkeypatch):
 
 
 class FakeHandler(object):
-    def open_reader_for(self, url: "URL", extras: dict) -> Reader:
-        ...
+    def open_reader_for(self, url: "URL", extras: dict) -> Reader: ...
 
-    def open_writer_for(self, url: "URL", extras: dict) -> Writer:
-        ...
+    def open_writer_for(self, url: "URL", extras: dict) -> Writer: ...
 
 
 @pytest.fixture

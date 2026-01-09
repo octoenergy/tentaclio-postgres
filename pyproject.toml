@@ -53,7 +53,7 @@ exclude = '(\.mypy_cache)'
 exclude = ["logs", ".*/*.py", "*.egg-info"]
 max-line-length = 99
 max-complexity = 10
-ignore = ["F405","W391","W503"]
+ignore = ["F405","W391","W503", "E704"]
 
 [tool.isort]
 line_length = 99
