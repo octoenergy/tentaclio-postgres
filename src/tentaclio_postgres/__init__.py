@@ -5,7 +5,6 @@ from tentaclio import *  # noqa
 from .clients.postgres_client import PostgresClient
 from .streams.postgres_handler import PostgresURLHandler
 
-
 # Db registry
 DB_REGISTRY.register("postgresql", PostgresClient)  # type: ignore
 

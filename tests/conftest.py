@@ -13,7 +13,6 @@ from tentaclio import URL, Reader, Writer
 
 from tentaclio_postgres import clients
 
-
 POSTGRES_TEST_URL = os.getenv("TENTACLIO__CONN__POSTGRES_TEST")
 
 

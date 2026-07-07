@@ -11,7 +11,6 @@ import pandas as pd
 from tentaclio import protocols
 from tentaclio.clients import decorators, sqla_client
 
-
 __all__ = ["PostgresClient"]
 
 

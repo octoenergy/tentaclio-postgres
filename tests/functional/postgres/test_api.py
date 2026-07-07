@@ -6,7 +6,6 @@ from tentaclio import credentials
 
 import tentaclio_postgres
 
-
 TEST_TABLE_NAME = "test_table"
 TEST_COLUMNS = ["col_1", "col_2", "col_3"]
 TEST_VALUES = [0, 1, 2]
