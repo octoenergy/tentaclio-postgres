@@ -5,7 +5,7 @@ which is more performant than using sql alchemy functions.
 
 import io
 import os
-from typing import Sequence
+from typing import Optional, Sequence
 
 import pandas as pd
 from tentaclio import protocols
@@ -36,14 +36,16 @@ class PostgresClient(sqla_client.SQLAlchemyClient):
 
     # Postgres Copy Expert methods:
     @decorators.check_conn
-    def get_df_unsafe(self, sql_query: str, params: dict = {}, **kwargs) -> pd.DataFrame:
+    def get_df_unsafe(
+        self, sql_query: str, params: Optional[dict] = None, **kwargs
+    ) -> pd.DataFrame:
         """Run a raw SQL query and return a data frame using COPY.
         Params:
             sql_query: query to execute
             params: not supported; must be None
             **kwargs: additional kwargs to pass to `pandas.read_csv`
         """
-        if params:
+        if params is not None:
             raise NotImplementedError(
                 "Support for `params` is not implemented; please provide a pre-formatted query."
             )
