@@ -5,7 +5,7 @@ which is more performant than using sql alchemy functions.
 
 import io
 import os
-from typing import Optional, Sequence
+from typing import Sequence
 
 import pandas as pd
 from tentaclio import protocols
@@ -37,7 +37,7 @@ class PostgresClient(sqla_client.SQLAlchemyClient):
     # Postgres Copy Expert methods:
     @decorators.check_conn
     def get_df_unsafe(
-        self, sql_query: str, params: Optional[dict] = None, **kwargs
+        self, sql_query: str, params: None = None, **kwargs
     ) -> pd.DataFrame:
         """Run a raw SQL query and return a data frame using COPY.
         Params:
