@@ -36,9 +36,7 @@ class PostgresClient(sqla_client.SQLAlchemyClient):
 
     # Postgres Copy Expert methods:
     @decorators.check_conn
-    def get_df_unsafe(
-        self, sql_query: str, params: None = None, **kwargs
-    ) -> pd.DataFrame:
+    def get_df_unsafe(self, sql_query: str, params: None = None, **kwargs) -> pd.DataFrame:
         """Run a raw SQL query and return a data frame using COPY.
         Params:
             sql_query: query to execute
