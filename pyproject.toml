@@ -61,9 +61,9 @@ ignore = ["F405","W391","W503", "E704"]
 profile = "black"
 line_length = 99
 multi_line_output = 3
-include_trailing_comma = "True"
+include_trailing_comma = true
 default_section = "THIRDPARTY"
-known_first_party = "tentaclio-postgres"
+known_first_party = ["tentaclio_postgres"]
 sections = "STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 
 [tool.mypy]
