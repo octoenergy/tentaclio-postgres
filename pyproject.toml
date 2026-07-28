@@ -38,7 +38,6 @@ dev = [
     "Flake8-pyproject",
     "isort>=5.11.2",
     "mypy",
-    "twine",
 ]
 
 [tool.setuptools.packages.find]
