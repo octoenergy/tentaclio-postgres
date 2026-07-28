@@ -1,9 +1,13 @@
 """This package implements the tentaclio postgres client"""
 
+from importlib.metadata import version as _version
+
 from tentaclio import *  # noqa
 
 from .clients.postgres_client import PostgresClient
 from .streams.postgres_handler import PostgresURLHandler
+
+__version__ = _version("tentaclio-postgres")
 
 # Db registry
 DB_REGISTRY.register("postgresql", PostgresClient)  # type: ignore
