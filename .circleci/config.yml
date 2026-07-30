@@ -1,15 +1,35 @@
 ---
-# Python CircleCI 2.0 configuration file
+# Python CircleCI configuration file
 #
 # INFO: Check CircleCI documentation for more details
-#       https://circleci.com/docs/2.0/language-python/
+#       https://circleci.com/docs/guides/getting-started/language-python
 
 version: 2.1
 
 executors:
   standard:
+    parameters:
+      python-version:
+        default: "3.10"
+        type: string
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:<< parameters.python-version >>
+
+  standard-postgres:
+    parameters:
+      python-version:
+        default: "3.10"
+        type: string
+    docker:
+      - image: cimg/python:<< parameters.python-version >>
+        environment:
+          TENTACLIO__CONN__POSTGRES_TEST: postgresql://:@localhost:5432/tentaclio-db
+      - image: cimg/postgres:18.4
+        environment:
+          # CircleCI img run under `circleci` user
+          POSTGRES_USER: circleci
+          POSTGRES_DB: tentaclio-db
+
 
 # -----------------
 # Reusable commands
@@ -40,55 +60,68 @@ commands:
             - "./.git"
 
   update_virtualenv:
+    parameters:
+      python-version:
+        type: string
     steps:
       - restore_cache:
           keys:
-            - virtualenv-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
-            - virtualenv-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-
-            - virtualenv-{{ .Environment.CACHE_VERSION }}-
+            - virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
+            - virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-
+            - virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-
       - configure_github
       - run:
           name: Install Python packages
           command: make sync
       - save_cache:
-          key: virtualenv-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
+          key: virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
           paths:
             - "./.venv"
 
+
 jobs:
   lint:
-    executor: standard
+    parameters:
+      python-version:
+        default: "3.10"
+        type: string
+    executor:
+      name: standard
+      python-version: << parameters.python-version >>
     steps:
       - checkout_source
-      - update_virtualenv
+      - update_virtualenv:
+          python-version: << parameters.python-version >>
       - run:
           name: Run Python linter
           command: make lint
 
   unit:
-    executor: standard
+    parameters:
+      python-version:
+        type: string
+    executor:
+      name: standard
+      python-version: << parameters.python-version >>
     steps:
       - checkout_source
-      - update_virtualenv
+      - update_virtualenv:
+          python-version: << parameters.python-version >>
       - run:
           name: Run Python unit tests
           command: make unit
 
   functional:
-    docker:
-      - image: cimg/python:3.10
-        environment:
-          TENTACLIO__CONN__POSTGRES_TEST: postgresql://:@localhost:5432/tentaclio-db
-
-      - image: cimg/postgres:18.4
-        environment:
-          # CircleCI img run under `circleci` user
-          POSTGRES_USER: circleci
-          POSTGRES_DB: tentaclio-db
-
+    parameters:
+      python-version:
+        type: string
+    executor:
+      name: standard-postgres
+      python-version: << parameters.python-version >>
     steps:
       - checkout_source
-      - update_virtualenv
+      - update_virtualenv:
+          python-version: << parameters.python-version >>
       - run:
           name: Run postgres functional tests
           command: make functional
@@ -104,10 +137,19 @@ workflows:
           tags:
             only: /.*/
       - unit:
+          matrix:
+            parameters:
+              python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
           filters:
             tags:
               only: /.*/
       - functional:
+          matrix:
+            parameters:
+              python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
           filters:
             tags:
               only: /.*/
+          requires:
+            - lint
+            - unit-<< matrix.python-version >>
