@@ -1,16 +1,35 @@
 ---
-# Python CircleCI 2.0 configuration file
+# Python CircleCI configuration file
 #
 # INFO: Check CircleCI documentation for more details
-#       https://circleci.com/docs/2.0/language-python/
+#       https://circleci.com/docs/guides/getting-started/language-python
 
 version: 2.1
 
 executors:
   standard:
+    parameters:
+      python-version:
+        default: "3.10"
+        type: string
     docker:
-      - image: circleci/python:3.9
-    working_directory: "~/lib"
+      - image: cimg/python:<< parameters.python-version >>
+
+  standard-postgres:
+    parameters:
+      python-version:
+        default: "3.10"
+        type: string
+    docker:
+      - image: cimg/python:<< parameters.python-version >>
+        environment:
+          TENTACLIO__CONN__POSTGRES_TEST: postgresql://:@localhost:5432/tentaclio-db
+      - image: cimg/postgres:18.4
+        environment:
+          # CircleCI img run under `circleci` user
+          POSTGRES_USER: circleci
+          POSTGRES_DB: tentaclio-db
+
 
 # -----------------
 # Reusable commands
@@ -33,101 +52,80 @@ commands:
             - source-{{ .Branch }}-{{ .Revision }}
             - source-{{ .Branch }}-
             - source-
-      - checkout
+      - checkout:
+          method: full
       - save_cache:
           key: source-{{ .Branch }}-{{ .Revision }}
           paths:
             - "./.git"
 
-# todo: remove unixodbc when tentaclio 1.0 is released
-  install_unixodbc:
-    steps:
-      - run:
-          name: Instal UnixODBC
-          command: |
-            sudo apt-get install unixodbc-dev -y
-
   update_virtualenv:
+    parameters:
+      python-version:
+        type: string
     steps:
+      - restore_cache:
+          keys:
+            - virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
+            - virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-
+            - virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-
       - configure_github
-      - run:
-          name: Install uv
-          command: curl -LsSf https://astral.sh/uv/install.sh | sh && echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-      - install_unixodbc
       - run:
           name: Install Python packages
           command: make sync
       - save_cache:
-          key: virtualenv-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
+          key: virtualenv-<< parameters.python-version >>-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
           paths:
             - "./.venv"
 
+
 jobs:
   lint:
-    executor: standard
+    parameters:
+      python-version:
+        default: "3.10"
+        type: string
+    executor:
+      name: standard
+      python-version: << parameters.python-version >>
     steps:
       - checkout_source
-      - update_virtualenv
+      - update_virtualenv:
+          python-version: << parameters.python-version >>
       - run:
           name: Run Python linter
           command: make lint
 
   unit:
-    executor: standard
+    parameters:
+      python-version:
+        type: string
+    executor:
+      name: standard
+      python-version: << parameters.python-version >>
     steps:
       - checkout_source
-      - update_virtualenv
+      - update_virtualenv:
+          python-version: << parameters.python-version >>
       - run:
           name: Run Python unit tests
           command: make unit
 
   functional:
-    working_directory: ~/lib
-    docker:
-      - image: circleci/python:3.9
-        environment:
-          TENTACLIO__CONN__POSTGRES_TEST: postgresql://:@localhost:5432/tentaclio-db
-          PIPENV_VENV_IN_PROJECT: true
-
-      - image: circleci/postgres:9.5.10
-        environment:
-          # CircleCI img run under `circleci` user
-          POSTGRES_USER: circleci
-          POSTGRES_DB: tentaclio-db
-
+    parameters:
+      python-version:
+        type: string
+    executor:
+      name: standard-postgres
+      python-version: << parameters.python-version >>
     steps:
       - checkout_source
-      - update_virtualenv
+      - update_virtualenv:
+          python-version: << parameters.python-version >>
       - run:
           name: Run postgres functional tests
           command: make functional
 
-  release:
-    executor: standard
-    steps:
-      - checkout_source
-      - update_virtualenv
-      - restore_cache:
-          keys:
-            - pip-cache-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "uv.lock" }}
-            - pip-cache-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-
-            - pip-cache-{{ .Environment.CACHE_VERSION }}-
-      - run:
-          name: Verify git tag vs. version
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            python setup.py verify
-      - run:
-          name: Init .pypirc
-          command: |
-            echo -e "[pypi]" >> ~/.pypirc
-            echo -e "username = octoenergy" >> ~/.pypirc
-            echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
-      - run:
-          name: Create release
-          command: |
-            make release
 
 workflows:
   version: 2
@@ -135,26 +133,23 @@ workflows:
   test-build-deploy:
     jobs:
       - lint:
-          filters:
-            tags:
-              only: /.*/
+        filters:
+          tags:
+            only: /.*/
       - unit:
+          matrix:
+            parameters:
+              python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
           filters:
             tags:
               only: /.*/
       - functional:
+          matrix:
+            parameters:
+              python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
           filters:
             tags:
               only: /.*/
-      - release:
           requires:
             - lint
-            - unit
-            - functional
-          filters:
-            tags:
-              only: /[0-9]+(\.[0-9]+)*(-alpha\.[0-9]+)?/
-            branches:
-              ignore: /.*/
-          context: TENTACLIO
-
+            - unit-<< matrix.python-version >>

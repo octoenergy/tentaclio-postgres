@@ -8,7 +8,6 @@ from tentaclio.urls import URL
 
 from tentaclio_postgres.clients import postgres_client
 
-
 __all__ = ["PostgresURLHandler"]
 
 

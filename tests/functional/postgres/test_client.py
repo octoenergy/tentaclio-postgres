@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 import sqlalchemy as sqla
 
-
 TEST_TABLE_NAME = "test_table"
 TEST_COLUMNS = ["column_int", "column_str", "column_float"]
 TEST_VALUES = [1, "test_1", 123.456]
